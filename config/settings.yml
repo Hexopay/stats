@@ -1,0 +1,19 @@
+development:
+  elastic:
+    url: http://127.0.0.1:9200
+    credentials: ''
+
+staging:
+  elastic:
+    url: http://127.0.0.1:9200
+    credentials: ''
+
+production:
+  elastic:
+    url: http://192.168.1.201:9200
+    credentials: 'elastic:uIjXFICZh8pi2gZzeCWv'
+
+test: &test
+  elastic:
+    url: http://127.0.0.1:9200
+    credentials: ''

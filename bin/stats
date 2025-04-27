@@ -1,0 +1,8 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative '../lib/stats'
+
+puts "RUN start at #{Time.now}"
+Stats::Stats.new(report_type: 'daily_stats', dates: [Date.new(2025, 4, 16)]).run
+puts "RUN end at #{Time.now}"
