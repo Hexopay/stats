@@ -4,5 +4,5 @@
 require_relative '../lib/stats'
 
 puts "RUN start at #{Time.now}"
-Stats::Stats.new(report_type: 'daily_stats', dates: [Date.new(2025, 4, 16)]).run
+Stats::Stats.new(report_type: 'daily_figures', dates: [Date.new(2025, 4, 16)]).run
 puts "RUN end at #{Time.now}"

@@ -2,7 +2,7 @@ require_relative '../currency_converter'
 
 module Stats
   class Loader
-    class DailyStats
+    class DailyFigures
       attr_reader :date, :currency_converter
 
       def initialize(date, currency_converter=nil)

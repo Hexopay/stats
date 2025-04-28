@@ -9,19 +9,19 @@ require_relative 'stats/publisher'
 
 module Stats
   class Stats
+    include Logger
     autoload :Env, 'stats/env'
     autoload :Settings, 'stats/settings'
     attr_reader :options, :logger
 
     def initialize(options)
       @options = options
-      @logger = options.fetch(:logger) { Logger.new }
     end
 
     def run
       Main.new(options).run
     rescue StandardError => e
-      logger.error("Error: #{e.message}")
+      log("Error: #{e.full_message}")
     end
   end
 end

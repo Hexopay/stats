@@ -5,11 +5,12 @@ require_relative 'http_helper'
 module Stats
   class Publisher
     include HttpHelper
-    attr_reader :data, :index_name, :settings, :elastic_url, :headers
+    attr_reader :data, :report_type, :index_name, :settings, :elastic_url, :headers
 
     def initialize(report_type, data, settings = Settings)
       @data = data
-      @index_name = _set_index_name(report_type)
+      @report_type = report_type
+      @index_name = _set_index_name
       @settings = settings
       @elastic_url = settings.elastic.url
       @headers = {

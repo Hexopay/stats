@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'loader/daily_stats'
+require_relative 'loader/daily_figures'
 require_relative 'loader/merchant_order_stats'
 
 module Stats

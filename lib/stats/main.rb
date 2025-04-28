@@ -5,10 +5,11 @@ require_relative 'args_handler'
 # Main class
 module Stats
   class Main
+    include Logger
     attr_reader :report_type, :dates, :data, :period
 
     def initialize(options = {})
-      @report_type = options.fetch(:report_type) || 'daily_stats'
+      @report_type = options.fetch(:report_type) || 'daily_figures'
       @period = options.fetch(:period) || 'yesterday'
       _set_params
     end
@@ -26,11 +27,15 @@ module Stats
     end
 
     def _load_data
+      log('Start loading ' + report_type)
       @data = Loader.new(report_type:, dates:).load
+      log('End loading ' + report_type)
     end
 
     def _publish
+      log('Start publishing' + report_type)
       Publisher.new(report_type, data).publish
+      log('End publishing' + report_type)
     end
   end
 end

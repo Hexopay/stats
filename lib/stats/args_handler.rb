@@ -6,7 +6,7 @@ require 'date'
 # Handle command line arguments
 class ArgsHandler
   # include Env
-  REPORT_TYPES = %w[daily_stats merchant_gateway_order_stats].freeze
+  REPORT_TYPES = %w[daily_figures merchant_order_stats].freeze
   PERIODS = {
     default: 'yesterday',
     # yesterday by default
@@ -47,7 +47,7 @@ class ArgsHandler
 
   # Command args Array: [Env, ReportType, PeriodStr]
   # where
-  #   ReportType: [daily_stats|merchant_gateway_order_stats]
+  #   ReportType: [daily_figures|merchant_gateway_order_stats]
   #   Period one of:
   #     - yesterday - DEFAULT value
   #     - today
@@ -59,13 +59,13 @@ class ArgsHandler
 
   # Parsing ARGV as follow:
   # ARGV                                                            env_name     report_type         period
-  # %w[env=test]                                                 -> test,        daily_stats,        yesterday
-  # %w[env=test daily_stats]                                     -> test,        daily_stats,        yesterday
+  # %w[env=test]                                                 -> test,        daily_figures,        yesterday
+  # %w[env=test daily_figures]                                     -> test,        daily_figures,        yesterday
   # %w[env=test merchant_gateway_order_stats]                    -> test,        merchant_g...stats, yesterday
   # %w[env=test merchant_gateway_order_stats today]              -> test,        merchant_g...stats, today
   # %w[         merchant_gateway_order_stats today]              -> development, merchant_g...stats, today
   # %w[         merchant_gateway_order_stats date_range=[d1-d2]] -> development, merchant_g...stats, date_ragne=...
-  def initialize(args = %w[daily_stats yesterday])
+  def initialize(args = %w[daily_figures yesterday])
     @args = args
     @report_type = parse_arg(arr: REPORT_TYPES, default_value: REPORT_TYPES.first)
     @period_arg = parse_arg(arr: PERIODS.keys, default_value:  PERIODS[:default])
