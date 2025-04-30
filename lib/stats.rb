@@ -10,8 +10,6 @@ require_relative 'stats/publisher'
 module Stats
   class Stats
     include Logger
-    autoload :Env, 'stats/env'
-    autoload :Settings, 'stats/settings'
     attr_reader :options, :logger
 
     def initialize(options)
@@ -19,6 +17,7 @@ module Stats
     end
 
     def run
+      require 'pry'; binding.pry;
       Main.new(options).run
     rescue StandardError => e
       log("Error: #{e.full_message}")

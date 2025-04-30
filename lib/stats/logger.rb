@@ -3,10 +3,12 @@
 module Stats
   module Logger
     def log(message)
+      return unless Env.production?
+
       puts "#{Time.now}: #{Env.current} #{message}\n"
     end
 
-    # def loggable *meths
+    # def loggable *meths, *opts
     #   meths.each do |m|
 
     #     define_method m do

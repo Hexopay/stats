@@ -6,12 +6,14 @@ require_relative 'args_handler'
 module Stats
   class Main
     include Logger
-    attr_reader :report_type, :dates, :data, :period
+    attr_reader :report_type, :period, :dates, :data
 
     def initialize(options = {})
-      @report_type = options.fetch(:report_type) || 'daily_figures'
-      @period = options.fetch(:period) || 'yesterday'
-      _set_params
+      @report_type = options.fetch(:report_type, 'daily_figures')
+      @period = options.fetch(:period, 'yesterday')
+      args_handler = options.fetch(:args_handler, ArgsHandler)
+      runtime_opts = args_handler.new([report_type, period])
+      @dates = runtime_opts.dates
     end
 
     def run
@@ -21,11 +23,6 @@ module Stats
 
     private
 
-    def _set_params
-      @runtime_opts = ArgsHandler.new([report_type, period])
-      @dates = @runtime_opts.dates
-    end
-
     def _load_data
       log('Start loading ' + report_type)
       @data = Loader.new(report_type:, dates:).load
@@ -33,9 +30,9 @@ module Stats
     end
 
     def _publish
-      log('Start publishing' + report_type)
+      log('Start publishing ' + report_type)
       Publisher.new(report_type, data).publish
-      log('End publishing' + report_type)
+      log('End publishing ' + report_type)
     end
   end
 end
