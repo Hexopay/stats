@@ -14,12 +14,13 @@ module Stats
 
     def initialize(options)
       @options = options
+      Env.set options.fetch(:env, Env.default)
+      Settings.setup!
     end
 
     def run
-      require 'pry'; binding.pry;
       Main.new(options).run
-    rescue StandardError => e
+    rescue e
       log("Error: #{e.full_message}")
     end
   end

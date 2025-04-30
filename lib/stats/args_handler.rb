@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
 require 'date'
-# require_relative 'env'
+require_relative 'env'
 
 # Handle command line arguments
 class ArgsHandler
-  # include Env
+  #include Env
   REPORT_TYPES = %w[daily_figures merchant_order_stats].freeze
   PERIODS = {
     default: 'yesterday',

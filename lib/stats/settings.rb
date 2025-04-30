@@ -7,8 +7,10 @@ module Stats
   extend Stats::Utils
 
   class Settings < SettingsLogic
-    source "#{Stats.root}/config/settings.yml"
-    namespace Env.current
-    load!
+    def self.setup!
+      source "#{::Stats.root}/config/settings.yml"
+      namespace Env.current
+      load!
+    end
   end
 end

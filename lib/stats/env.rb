@@ -27,7 +27,5 @@ module Stats
         ENVIRONMENTS.first
       end
     end
-
-    set Rails.env
   end
 end

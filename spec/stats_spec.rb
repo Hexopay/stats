@@ -1,10 +1,11 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
-require_relative '../lib/smart_routing'
+require_relative '../lib/stats'
 require 'ostruct'
 
-describe SmartRouting do
+describe Stats do
+  allow(Stats::Env::Rails).to_receive(:env).and_return('test')
   let(:brand) { OpenStruct.new(:name => 'master') }
   let!(:gateway) do
     OpenStruct.new(
