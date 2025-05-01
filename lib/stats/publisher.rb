@@ -10,13 +10,14 @@ module Stats
     def initialize(report_type, data, settings = Settings)
       @data = data
       @report_type = report_type
-      @index_name = _set_index_name
+      @index_name = _index_name
       @settings = settings
       @elastic_url = settings.elastic.url
       @headers = {
         'Content-Type' => 'application/json',
         'Authorization' => "Basic #{Base64.strict_encode64(settings.elastic.credentials)}"
       }
+      require 'pry'; binding.pry;
     end
 
     def publish
@@ -27,8 +28,15 @@ module Stats
 
     private
 
-    def _set_index_name
-      report_type
+    # env                               index_name
+    # production  ->             daily_figures|            merchant_order_stats
+    # development -> development_daily_figures|development_merchant_order_stats
+    # staging     ->     staging_daily_figures|    staging_merchant_order_stats
+    # test        ->        test_daily_figures|       test_merchant_order_stats
+    def _index_name
+      return report_type if Env.production?
+
+      [Env.current, report_type].join('_')
     end
 
     def _push_to_elastic(item)

@@ -16,6 +16,8 @@ ENV['ENV'] = 'test'
 
 require 'rspec'
 require 'webmock/rspec'
+require_relative '../lib/stats'
+
 WebMock.enable!
 WebMock.disable_net_connect!(allow_localhost: true)
 

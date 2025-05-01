@@ -1,23 +1,25 @@
 # frozen_string_literal: true
 
 source 'https://rubygems.org'
+git_source(:github) { |repo_name| 'https://github.com/#{repo_name}' }
+ruby '3.2.2'
 
-git_source(:github) { |repo_name| "https://github.com/#{repo_name}" }
-
+gem 'activesupport', '~> 7.2'
+gem 'byebug'
+gem 'faraday'
+gem 'faraday_middleware'
 gem 'fuubar'
-gem 'reek'
-gem 'rspec'
-gem 'webmock'
-gem 'rubocop'
-gem 'simplecov'
 gem 'hirb'
+gem 'json'
+gem 'pry'
+gem 'pry-byebug'
+gem 'pry-rescue'
+gem 'reek'
+gem 'rubocop'
+gem 'settingslogic'
+gem 'simplecov'
 
-gem 'pry', '~> 0.10'
-gem "pry-rescue", "~> 1.5"
-
-gem "pry-byebug", "~> 3.5.0"
-gem "byebug", "~> 9.1"
-gem "faraday"
-gem "faraday_middleware"
-gem "json"
-gem "settingslogic"
+group :test do
+  gem 'rspec'
+  gem 'webmock'
+end

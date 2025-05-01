@@ -6,14 +6,18 @@ require_relative 'args_handler'
 module Stats
   class Main
     include Logger
-    attr_reader :report_type, :period, :dates, :data
+    attr_reader :report_type, :dates, :data
 
     def initialize(options = {})
-      @report_type = options.fetch(:report_type, 'daily_figures')
-      @period = options.fetch(:period, 'yesterday')
       args_handler = options.fetch(:args_handler, ArgsHandler)
-      runtime_opts = args_handler.new([report_type, period])
+      runtime_opts = args_handler.new(
+        [
+          options[:report_type],
+          options[:period]
+        ]
+      ).handle
       @dates = runtime_opts.dates
+      @report_type = runtime_opts.report_type
     end
 
     def run

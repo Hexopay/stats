@@ -1,7 +1,10 @@
 # frozen_string_literal: true
 
+require 'active_support'
+require 'active_support/core_ext/numeric'
 require 'date'
 require_relative 'env'
+
 
 # Handle command line arguments
 class ArgsHandler
@@ -43,7 +46,7 @@ class ArgsHandler
     end
   }.freeze
 
-  attr_reader :report_type, :period_type, :period_arg, :dates, :env, :args
+  attr_reader :report_type, :period_type, :dates, :env, :args
 
   # Command args Array: [Env, ReportType, PeriodStr]
   # where
@@ -67,18 +70,20 @@ class ArgsHandler
   # %w[         merchant_gateway_order_stats date_range=[d1-d2]] -> development, merchant_g...stats, date_ragne=...
   def initialize(args = %w[daily_figures yesterday])
     @args = args
-    @report_type = parse_arg(arr: REPORT_TYPES, default_value: REPORT_TYPES.first)
-    @period_arg = parse_arg(arr: PERIODS.keys, default_value:  PERIODS[:default])
-    @period_type = period_arg.include?('=') ? "#{period_arg.split('=')[0]}=" : period_arg
-    # @env = parse_and_set_env
-
-    raise "Unknown report_type -> #{@report_type}" unless REPORT_TYPES.include?(@report_type)
-    raise "Unknown period -> #{@period_type}" unless PERIODS.keys.include?(@period_type)
-
-    @dates = PERIODS[period_type]&.call(period_arg)
   end
 
-  def parse_arg(opts)
+  def handle
+    @report_type = _parse_arg(arr: REPORT_TYPES, default_value: REPORT_TYPES.first)
+    period_arg =  _parse_arg(arr: PERIODS.keys, default_value:  PERIODS[:default])
+    @period_type = period_arg.include?('=') ? "#{period_arg.split('=')[0]}=" : period_arg
+    @dates = PERIODS[period_type]&.call(period_arg)
+    # @env = _parse_and_set_env
+    self
+  end
+
+  private
+
+  def _parse_arg(opts)
     args
       .select { |arg| opts[:arr].index { |item|
         arg =~ /#{item}/
@@ -86,7 +91,7 @@ class ArgsHandler
       .first || opts[:default_value]
   end
 
-  def parse_and_set_env
+  def _parse_and_set_env
     Env.send(
       args
       &.select { |i| i.include?('env') }

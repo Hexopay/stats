@@ -10,16 +10,12 @@ module Stats
 
     # def loggable *meths, *opts
     #   meths.each do |m|
-
     #     define_method m do
-    #       require 'pry'; binding.pry;
     #       puts 'start'
     #       send m
     #       puts 'end'
     #     end
     #   end
-    #   require 'pry'; binding.pry;
-
     # end
   end
 end
