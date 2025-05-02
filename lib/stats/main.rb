@@ -6,7 +6,7 @@ require_relative 'args_handler'
 module Stats
   class Main
     include Logger
-    attr_reader :report_type, :dates, :data
+    attr_reader :report_type, :dates, :data, :settings
 
     def initialize(options = {})
       args_handler = options.fetch(:args_handler, ArgsHandler)
@@ -18,6 +18,7 @@ module Stats
       ).handle
       @dates = runtime_opts.dates
       @report_type = runtime_opts.report_type
+      @settings = options[:settings]
     end
 
     def run
@@ -35,7 +36,7 @@ module Stats
 
     def _publish
       log('Start publishing ' + report_type)
-      Publisher.new(report_type, data).publish
+      Publisher.new(report_type, data, settings).publish
       log('End publishing ' + report_type)
     end
   end

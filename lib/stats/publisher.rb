@@ -7,7 +7,7 @@ module Stats
     include HttpHelper
     attr_reader :data, :report_type, :index_name, :settings, :elastic_url, :headers
 
-    def initialize(report_type, data, settings = Settings)
+    def initialize(report_type, data, settings)
       @data = data
       @report_type = report_type
       @index_name = _index_name
@@ -17,7 +17,6 @@ module Stats
         'Content-Type' => 'application/json',
         'Authorization' => "Basic #{Base64.strict_encode64(settings.elastic.credentials)}"
       }
-      require 'pry'; binding.pry;
     end
 
     def publish

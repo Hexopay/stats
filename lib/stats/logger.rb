@@ -3,7 +3,7 @@
 module Stats
   module Logger
     def log(message)
-      return unless Env.production?
+      return if Env.production?
 
       puts "#{Time.now}: #{Env.current} #{message}\n"
     end
