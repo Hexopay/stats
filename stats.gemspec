@@ -8,7 +8,7 @@ Gem::Specification.new do |spec|
   spec.required_ruby_version = '>= 3.2.2'
   spec.authors     = ['Andrey Eremeev']
   spec.email       = ['andrey@hexopay.com']
-  spec.homepage    = 'https://github.com/hexopay/stats'
+  spec.homepage    = 'https://github.com/Hexopay/stats'
   spec.summary     = 'Implement Stats to update elastic'
   spec.description = 'Implement Stats to update elastic'
   spec.license     = 'MIT'
