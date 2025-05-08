@@ -1,0 +1,54 @@
+{
+    "properties": {
+      "back_office_merchant_id": {
+        "type": "long"
+      },
+      "back_office_shop_id": {
+        "type": "long"
+      },
+      "card": {
+        "type": "keyword"
+      },
+      "count": {
+        "type": "long"
+      },
+      "country": {
+        "type": "keyword"
+       
+      },
+      "currency": {
+        "type": "keyword"
+      },
+      "created_at": {
+        "type": "date"
+      },
+      "gateway": {
+        "type": "keyword"
+      },
+      "merchant": {
+        "type": "keyword"
+      },
+      "shop": {
+        "type": "keyword"
+        
+      },
+      "status": {
+        "type": "keyword"
+      },
+      "export_time": {
+        "type": "text"
+      },
+      "transaction_type": {
+        "type": "keyword"
+      },
+      "volume": {
+        "type": "double"
+      },
+      "volume_gbp": {
+        "type": "double"
+      },
+      "volume_eur": {
+        "type": "double"
+      }
+    }
+}

@@ -14,18 +14,17 @@ module Stats
         merchants_gateways.each do |m_g|
           merchant = m_g[:merchant]
           gateway = m_g[:gateway]
-          total = 0
+          total = 0.0
           STATUSES.each do |status|
-            count = query
+            count =
+              by_date
               .where(conditions(status, merchant, gateway))
-              .where(
-                'hexo_transactions.created_at >= ? AND hexo_transactions.created_at <= ?',
-                date.beginning_of_day, date.end_of_day
-              )
               .count
             total = count.to_f if status == :All
-            percentage = total == 0.0 ? 0 : (100 / total * count).round(1)
-            status = status == :successful ? 'success' : status.to_s,
+            next if count.zero?
+
+            percentage = total.zero? ? total : (100 / total * count).round(1)
+            status = status == :successful ? 'success' : status.to_s
             res << {
               merchant: merchant[:name],
               gateway: gateway[:name],
@@ -42,18 +41,18 @@ module Stats
       end
 
       def conditions(status, merchant, gateway)
-        res = status == :All ? {} : { status: status }
+        res = status == :All ? {} : { status: }
         res[:shop] = { merchant_id: merchant[:id] } if merchant[:name] != 'All'
         res[:order] = { gateway_id: gateway[:id] } if gateway[:name] != 'All'
         res
       end
 
       def merchants
-        Merchant.all.map { |m| { name: m.name, id: m.id } }
+        by_date.map { |t| { name: t.merchant.name, id: t.merchant_id } }.uniq
       end
 
       def gateways
-        Gateway.all.map { |g| { name: g.type.demodulize, id: g.id } }
+        by_date.map { |t| { name: t.gateway.type.demodulize, id: t.gateway.id } }.uniq
       end
 
       def merchants_gateways
@@ -62,7 +61,16 @@ module Stats
       end
 
       def query
-        Transaction::Base.eager_load(order: %i[gateway shop])
+        Transaction::Base
+          .eager_load(order: %i[gateway shop])
+      end
+
+      def by_date
+        query
+          .where(
+            'hexo_transactions.created_at >= ? AND hexo_transactions.created_at <= ?',
+            date.beginning_of_day, date.end_of_day
+          )
       end
 
       # Merchant Gateway Status
