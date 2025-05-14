@@ -33,7 +33,8 @@ module Stats
     # staging     ->     staging_daily_figures|    staging_merchant_order_stats
     # test        ->        test_daily_figures|       test_merchant_order_stats
     def _index_name
-      return report_type if Env.production?
+      ## TODO Change back after testing on prod
+      return 'staging_' + report_type if Env.production?
 
       [Env.current, report_type].join('_')
     end
@@ -53,3 +54,6 @@ end
 
 # curl -X PUT --user "elastic:uIjXFICZh8pi2gZzeCWv" -H "Content-Type: application/json" --data-binary {} http://192.168.1.201:9200/staging_daily_figures
 # curl -X PUT --user "elastic:uIjXFICZh8pi2gZzeCWv" -H "Content-Type: application/json" --data-binary @daily_figures_mappings.json http://192.168.1.201:9200/staging_daily_figures/_mapping
+
+# curl -X PUT --user "elastic:uIjXFICZh8pi2gZzeCWv" -H "Content-Type: application/json" --data-binary {} http://192.168.1.201:9200/staging_merchant_order_stats
+# curl -X PUT --user "elastic:uIjXFICZh8pi2gZzeCWv" -H "Content-Type: application/json" --data-binary @merchant_order_stats_mappings.json http://192.168.1.201:9200/staging_merchant_order_stats/_mapping
