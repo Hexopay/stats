@@ -9,6 +9,7 @@ module Stats
     end
 
     def post(url, body, headers = {})
+
       request_type = Net::HTTP::Post
       make_request(request_type, url, body, headers)
     end

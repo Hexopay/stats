@@ -16,6 +16,7 @@ module Stats
           gateway = m_g[:gateway]
           total = 0.0
           STATUSES.each do |status|
+            puts [status, 'start:', Time.now.strftime("%H:%M:%S")].join (' ')
             count =
               by_date
               .where(conditions(status, merchant, gateway))
@@ -35,6 +36,7 @@ module Stats
               count:,
               percentage:
             }
+            puts [status, 'end:', Time.now.strftime("%H:%M:%S")].join (' ')
           end
         end
         res

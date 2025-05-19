@@ -10,42 +10,46 @@ module Stats
         @currency_converter = currency_converter || CurrencyConverter
       end
 
-      def load_for_date
-        merchants = Merchant.pluck(:id, :name).to_h
-        shops = Shop.pluck(:id, :name).to_h
-        gateways = Gateway.pluck(:id, :type).to_h
-        countries = Operation.pluck(:country).uniq
-        statuses = Operation.pluck(:status).uniq
-        # statuses = %w[successful failed pending expired incomplete]
-        # keys = %i[merchant_id]
-
+      def grouped_operations
         Operation
-          .where('created_at >= ? AND created_at <= ?', date.beginning_of_day, date.end_of_day)
-          .group_by { |o| [o.merchant_id, o.shop_id, o.gateway_id, o.status, o.country, o.currency, o.transaction_type] }
-          .map do |keys, ops|
-            merchant_id, shop_id, gateway_id, status, country, currency, transaction_type = keys
-            volume = ops.sum(&:amount).to_f
-            count = ops.count.to_s
-            {
-              merchant: merchants[merchant_id],
-              back_office_merchant_id: merchant_id,
-              shop: shops[shop_id],
-              back_office_shop_id: shop_id,
-              gateway: gateways[gateway_id].demodulize,
-              status: status.capitalize,
-              country:,
-              currency:,
-              transaction_type: transaction_type.demodulize,
-              export_time: Time.now,
-              created_at: date.strftime('%Y-%m-%d'),
-
-              card: '', # Ask if it is right
-              volume: volume.to_s,
-              volume_eur: currency_converter.new(volume, currency, 'EUR', date).convert,
-              volume_gbp: currency_converter.new(volume, currency, 'GBP', date).convert,
-              count:
-            }
+          .eager_load(:shop, :merchant, :gateway)
+          .where(created_at: date)
+          .group_by do |operation|
+            [
+              operation.merchant_id, operation.merchant.name,
+              operation.shop_id, operation.shop.name,
+              operation.gateway.type,
+              operation.status, operation.country, operation.currency, operation.transaction_type
+            ]
           end
+      end
+
+      def load_for_date
+        grouped_operations.map do |keys, ops|
+          merchant_id, merchant_name, shop_id, shop_name, gateway_type,
+          status, country, currency, transaction_type = keys
+          volume = ops.sum(&:amount).to_f
+          count = ops.count.to_s
+          {
+            merchant: merchant_name,
+            back_office_merchant_id: merchant_id,
+            shop: shop_name,
+            back_office_shop_id: shop_id,
+            gateway: gateway_type.demodulize,
+            status: status.capitalize,
+            country:,
+            currency:,
+            transaction_type: transaction_type.demodulize,
+            export_time: Time.now,
+            created_at: date.strftime('%Y-%m-%d'),
+
+            card: '', # Ask if it is right
+            volume: volume.to_s,
+            volume_eur: currency_converter.new(volume, currency, 'EUR', date).convert,
+            volume_gbp: currency_converter.new(volume, currency, 'GBP', date).convert,
+            count:
+          }
+        end
       end
     end
   end

@@ -20,8 +20,10 @@ module Stats
     end
 
     def publish
-      data.each do |item|
-        _push_to_elastic(item)
+      data.each do |set_for_date|
+        set_for_date[:data].each do |item|
+          _push_to_elastic(item)
+        end
       end
     end
 
@@ -41,7 +43,6 @@ module Stats
 
     def _push_to_elastic(item)
       puts "Publishing #{item}"
-
       post("#{elastic_url}/#{index_name}/_doc/", item.to_json, headers)
     end
   end
