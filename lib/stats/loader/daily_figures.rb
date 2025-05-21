@@ -3,51 +3,65 @@ require_relative '../currency_converter'
 module Stats
   class Loader
     class DailyFigures
-      attr_reader :date, :currency_converter
+      attr_reader :date, :currency_converter, :rates
 
       def initialize(date, currency_converter=nil)
         @date = date
         @currency_converter = currency_converter || CurrencyConverter
+        @rates = JSON.parse CurrencyConvertor.new(date: date).rate.dump
       end
 
       def grouped_operations
         Operation
-          .eager_load(:shop, :merchant, :gateway)
+          .joins(:merchant, :shop)
+          .select(
+            'hexo_operations.merchant_id,
+             merchants.name AS merchant_name,
+             hexo_operations.shop_id,
+             shops.name AS shop_name,
+             hexo_operations.status,
+             hexo_operations.country,
+             hexo_operations.currency,
+             hexo_operations.gateway_type,
+             hexo_operations.transaction_type,
+             COUNT(hexo_operations.id) AS count,
+             SUM(hexo_operations.eur_amount) AS total_eur_amount,
+             SUM(hexo_operations.gbp_amount) AS total_gbp_amount,
+             SUM(hexo_operations.amount) AS total_amount'
+          )
           .where(created_at: date)
-          .group_by do |operation|
-            [
-              operation.merchant_id, operation.merchant.name,
-              operation.shop_id, operation.shop.name,
-              operation.gateway.type,
-              operation.status, operation.country, operation.currency, operation.transaction_type
-            ]
-          end
+          .group(
+            'hexo_operations.merchant_id,
+             merchant_name,
+             hexo_operations.shop_id,
+             shop_name,
+             hexo_operations.status,
+             hexo_operations.country,
+             hexo_operations.currency,
+             hexo_operations.gateway_type,
+             hexo_operations.transaction_type'
+          )
       end
 
       def load_for_date
-        grouped_operations.map do |keys, ops|
-          merchant_id, merchant_name, shop_id, shop_name, gateway_type,
-          status, country, currency, transaction_type = keys
-          volume = ops.sum(&:amount).to_f
-          count = ops.count.to_s
+        grouped_operations.map do |op|
           {
-            merchant: merchant_name,
-            back_office_merchant_id: merchant_id,
-            shop: shop_name,
-            back_office_shop_id: shop_id,
-            gateway: gateway_type.demodulize,
-            status: status.capitalize,
-            country:,
-            currency:,
-            transaction_type: transaction_type.demodulize,
+            merchant: op.merchant_name,
+            back_office_merchant_id: op.merchant_id,
+            shop: op.shop_name,
+            back_office_shop_id: op.shop_id,
+            gateway: op.gateway_type.demodulize,
+            status: op.status.capitalize,
+            country: op.country,
+            currency: op.currency,
+            transaction_type: op.transaction_type.demodulize,
             export_time: Time.now,
             created_at: date.strftime('%Y-%m-%d'),
-
-            card: '', # Ask if it is right
-            volume: volume.to_s,
-            volume_eur: currency_converter.new(volume, currency, 'EUR', date).convert,
-            volume_gbp: currency_converter.new(volume, currency, 'GBP', date).convert,
-            count:
+            card: '',
+            volume: (op.total_amount / 100.0).to_s,
+            volume_eur: (op.total_eur_amount / 100.0).to_s,
+            volume_gbp: (op.total_gbp_amount / 100.0).to_s,
+            count: op.count.to_s
           }
         end
       end
