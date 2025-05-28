@@ -29,15 +29,15 @@ module Stats
     private
 
     def _load_data
-      log('Start loading ' + report_type)
+      log("Start loading #{report_type}, dates: #{dates}")
       @data = Loader.new(report_type:, dates:).load
-      log('End loading ' + report_type)
+      log("End loading #{report_type}, dates: #{dates}")
     end
 
     def _publish
-      log('Start publishing ' + report_type)
+      log("Start publuishing #{report_type}, dates: #{dates}")
       Publisher.new(report_type, data, settings).publish
-      log('End publishing ' + report_type)
+      log("End publishing #{report_type}, dates: #{dates}")
     end
   end
 end

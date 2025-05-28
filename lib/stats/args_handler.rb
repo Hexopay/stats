@@ -5,7 +5,6 @@ require 'active_support/core_ext/numeric'
 require 'date'
 require_relative 'env'
 
-
 # Handle command line arguments
 class ArgsHandler
   #include Env
@@ -74,7 +73,7 @@ class ArgsHandler
 
   def handle
     @report_type = _parse_arg(arr: REPORT_TYPES, default_value: REPORT_TYPES.first)
-    period_arg =  _parse_arg(arr: PERIODS.keys, default_value:  PERIODS[:default])
+    period_arg = _parse_arg(arr: PERIODS.keys, default_value:  PERIODS[:default])
     @period_type = period_arg.include?('=') ? "#{period_arg.split('=')[0]}=" : period_arg
     @dates = PERIODS[period_type]&.call(period_arg)
     # @env = _parse_and_set_env
@@ -84,11 +83,12 @@ class ArgsHandler
   private
 
   def _parse_arg(opts)
-    args
-      .select { |arg| opts[:arr].index { |item|
+    args.select do |arg|
+      opts[:arr].index do |item|
         arg =~ /#{item}/
-      } }
-      .first || opts[:default_value]
+      end
+    end
+    .first || opts[:default_value]
   end
 
   def _parse_and_set_env

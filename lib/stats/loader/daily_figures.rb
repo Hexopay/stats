@@ -1,14 +1,12 @@
-require_relative '../currency_converter'
+# frozen_string_literal: true
 
 module Stats
   class Loader
     class DailyFigures
-      attr_reader :date, :currency_converter, :rates
+      attr_reader :date
 
-      def initialize(date, currency_converter=nil)
+      def initialize(date)
         @date = date
-        @currency_converter = currency_converter || CurrencyConverter
-        @rates = JSON.parse CurrencyConvertor.new(date: date).rate.dump
       end
 
       def grouped_operations

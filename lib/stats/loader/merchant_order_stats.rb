@@ -1,89 +1,110 @@
+# frozen_string_literal: true
 module Stats
   class Loader
     class MerchantOrderStats
       attr_reader :date
 
       STATUSES = %i[All successful failed pending incomplete].freeze
+      ALL_MERCHANT = { name: 'All', id: nil }.freeze
+      ALL_GATEWAY = { name: 'All', id: nil }.freeze
 
       def initialize(date)
         @date = date
+        @transactions = nil
       end
 
       def load_for_date
-        res = []
-        merchants_gateways.each do |m_g|
-          merchant = m_g[:merchant]
-          gateway = m_g[:gateway]
-          total = 0.0
-          STATUSES.each do |status|
-            puts [status, 'start:', Time.now.strftime("%H:%M:%S")].join (' ')
-            count =
-              by_date
-              .where(conditions(status, merchant, gateway))
-              .count
-            total = count.to_f if status == :All
-            next if count.zero?
-
-            percentage = total.zero? ? total : (100 / total * count).round(1)
-            status = status == :successful ? 'success' : status.to_s
-            res << {
-              merchant: merchant[:name],
-              gateway: gateway[:name],
-              export_time: Time.now,
-              created_at: date,
-              time_series: Time.now,
-              status:,
-              count:,
-              percentage:
-            }
-            puts [status, 'end:', Time.now.strftime("%H:%M:%S")].join (' ')
-          end
-        end
-        res
+        load_transactions
+        build_stats
       end
 
-      def conditions(status, merchant, gateway)
-        res = status == :All ? {} : { status: }
-        res[:shop] = { merchant_id: merchant[:id] } if merchant[:name] != 'All'
-        res[:order] = { gateway_id: gateway[:id] } if gateway[:name] != 'All'
-        res
+      private
+
+      def load_transactions
+        @transactions =
+          query
+          .where('hexo_transactions.created_at >= ? AND hexo_transactions.created_at <= ?',
+                 date.beginning_of_day, date.end_of_day)
+          .where('hexo_orders.test != ?', true) # transaction.order.test == [true]
+          .includes(order: [:gateway, { shop: :merchant }])
+          .to_a
+      end
+
+      def build_stats
+        results = []
+
+        # Add the "All merchants, All gateways" combinations first
+        results += build_combinations(ALL_MERCHANT, ALL_GATEWAY)
+
+        # Add all merchant-specific combinations with "All gateways"
+        merchants.each do |merchant|
+          results += build_combinations(merchant, ALL_GATEWAY)
+        end
+
+        # Add all gateway-specific combinations with "All merchants"
+        gateways.each do |gateway|
+          results += build_combinations(ALL_MERCHANT, gateway)
+        end
+
+        # Add all merchant+gateway specific combinations
+        merchants.each do |merchant|
+          gateways.each do |gateway|
+            results += build_combinations(merchant, gateway)
+          end
+        end
+
+        results
+      end
+
+      def build_combinations(merchant, gateway)
+        filtered = filter_transactions(merchant, gateway)
+        total = filtered.size.to_f
+
+        STATUSES.map do |status|
+          count = status == :All ? total : filtered.count { |t| t.status == status.to_s }
+          next if count.zero?
+
+          {
+            merchant: merchant[:name],
+            gateway: gateway[:name] == 'All' ? '' : gateway[:name],
+            export_time: Time.now,
+            created_at: date,
+            time_series: Time.now,
+            status: status == :successful ? 'success' : status.to_s,
+            count: count.to_i,
+            percentage: total.zero? ? 0.0 : ((count / total) * 100).round(1)
+          }
+        end.compact
+      end
+
+      def filter_transactions(merchant, gateway)
+        @transactions.select do |t|
+          (merchant[:name] == 'All' || t.order.shop.merchant_id == merchant[:id]) &&
+            (gateway[:name] == 'All' || t.order.gateway_id == gateway[:id])
+        end
       end
 
       def merchants
-        by_date.map { |t| { name: t.merchant.name, id: t.merchant_id } }.uniq
+        @merchants ||= @transactions
+                       .map { |t| { name: t.order.shop.merchant.name, id: t.order.shop.merchant_id } }
+                       .uniq
       end
 
       def gateways
-        by_date.map { |t| { name: t.gateway.type.demodulize, id: t.gateway.id } }.uniq
-      end
-
-      def merchants_gateways
-        [{ merchant: { name: 'All' }, gateway: { name: 'All' } }] +
-          merchants.map { |m| gateways.map { |g| [merchant: m, gateway: g] } }.flatten
+        @gateways ||= @transactions
+                      .map { |t| { name: t.order.gateway.type.demodulize, id: t.order.gateway.id } }
+                      .uniq
       end
 
       def query
-        Transaction::Base
-          .eager_load(order: %i[gateway shop])
+        Transaction::Base.eager_load(order: %i[gateway shop])
       end
-
-      def by_date
-        query
-          .where(
-            'hexo_transactions.created_at >= ? AND hexo_transactions.created_at <= ?',
-            date.beginning_of_day, date.end_of_day
-          )
-      end
-
-      # Merchant Gateway Status
-      # All      All     All
-      # All      All     success
-      # All      All     failed
-      # All      All     pending
-      # All      All     incomplete
     end
   end
 end
+
+# dd = Loader::MerchantOrderStats.new(Date.yesterday)
+# ddd = dd.load_for_date
 
 # {
 #   "mappings": {
@@ -109,6 +130,9 @@ end
 #         },
 #         "status": {
 #           "type": "keyword"
+#         },
+#         "time_series": {
+#           "type": "date"
 #         },
 #         "times_series": {
 #           "type": "date"

@@ -8,23 +8,22 @@ module Stats
       make_request(request_type, url, nil, headers)
     end
 
-    def post(url, body, headers = {})
-
+    def post(url, body, headers = {}, proxy_url = '')
       request_type = Net::HTTP::Post
-      make_request(request_type, url, body, headers)
+      make_request(request_type, url, body, headers, proxy_url)
     end
 
-    def put(url, body, headers = {})
+    def put(url, body, headers = {}, proxy_url = '')
       request_type = Net::HTTP::Post
-      make_request(request_type, url, body, headers)
+      make_request(request_type, url, body, headers, proxy_url)
     end
 
     private
 
-    def make_request(request_type, url, body, headers)
+    def make_request(request_type, url, body, headers, proxy_url = '')
       uri = URI(url)
-
-      http = Net::HTTP.new(uri.host, uri.port)
+      proxy_uri = URI(proxy_url)
+      http = Net::HTTP.new(uri.host, uri.port, proxy_uri.host, proxy_uri.port)
       http.use_ssl = (uri.scheme == "https")
 
       # http = Net::HTTP.new(uri.host, uri.port, 'localhost', 8080)
