@@ -5,6 +5,7 @@ require_relative 'http_helper'
 module Stats
   class Publisher
     include HttpHelper
+    include Logger
     attr_reader :data, :report_type, :index_name, :settings, :elastic_url, :proxy_url, :headers
 
     def initialize(report_type, data, settings)
@@ -43,8 +44,10 @@ module Stats
     end
 
     def _push_to_elastic(item)
-      puts "Publishing #{item}"
-      post("#{elastic_url}/#{index_name}/_doc/", item.to_json, headers, proxy_url)
+      unique_id_bits = "#{item[:merchant]}-#{item[:gateway]}-#{item[:status]}-#{item[:times_series]}"
+      unique_id = "#{item[:created_at]}-#{Digest::MD5.hexdigest unique_id_bits}"
+      log("Publishing [id:#{unique_id}] #{item}")
+      post("#{elastic_url}/#{index_name}/_doc/#{unique_id}", item.to_json, headers, proxy_url)
     end
   end
 end
