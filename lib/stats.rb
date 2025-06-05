@@ -9,7 +9,7 @@ require_relative 'stats/publisher'
 module Stats
   class Stats
     include Logger
-    attr_reader :options, :logger
+    attr_reader :options
 
     def initialize(options)
       @options = options
@@ -18,8 +18,8 @@ module Stats
 
     def run
       Main.new(options).run
-    rescue StandardError => e
-      log("Error: #{e.full_message}")
+    rescue => e
+      log("Error: #{e.full_message}", :error)
     end
   end
 end

@@ -2,10 +2,13 @@
 
 module Stats
   module Logger
-    def log(message)
-      return if Env.production?
+    def log(message, level = :info)
+      puts "#{Time.now}: #{Env.current} #{message}\n" unless Env.production?
+      Rails.logger.send(level, message)
+    end
 
-      puts "#{Time.now}: #{Env.current} #{message}\n"
+    def level(value: :nologs)
+      @level ||= value
     end
 
     # def loggable *meths, *opts

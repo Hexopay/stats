@@ -4,6 +4,7 @@ source 'https://rubygems.org'
 git_source(:github) { |repo_name| 'https://github.com/#{repo_name}' }
 ruby '3.2.2'
 
+gem 'activerecord', '~> 7.2'
 gem 'activesupport', '~> 7.2'
 gem 'byebug'
 gem 'faraday'
@@ -20,6 +21,7 @@ gem 'settingslogic'
 gem 'simplecov'
 
 group :test do
+  gem 'factory_bot'
   gem 'rspec'
   gem 'webmock'
 end

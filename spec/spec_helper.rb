@@ -16,6 +16,7 @@ ENV['ENV'] = 'test'
 
 require 'rspec'
 require 'webmock/rspec'
+require 'factory_bot'
 require_relative '../lib/stats'
 
 WebMock.enable!

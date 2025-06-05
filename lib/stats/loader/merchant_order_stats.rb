@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module Stats
   class Loader
     class MerchantOrderStats
@@ -13,16 +14,46 @@ module Stats
         @transactions = nil
       end
 
+      # def load_for_date
+      #   # Get counts directly from SQL
+      #   sql = <<~SQL
+      #     SELECT
+      #       m.name AS merchant_name,
+      #       g.type AS gateway_type,
+      #       t.status,
+      #       COUNT(t.id) AS count,
+      #       date_trunc('day', t.created_at) AS created_at
+      #     FROM hexo_transactions t
+      #     JOIN hexo_orders o ON t.order_id = o.id
+      #     JOIN shops s ON o.shop_id = s.id
+      #     JOIN merchants m ON s.merchant_id = m.id
+      #     JOIN gateways g ON o.gateway_id = g.id
+      #     WHERE t.created_at BETWEEN '#{date.beginning_of_day}' AND '#{date.end_of_day}'
+      #       AND o.test = false
+      #     GROUP BY GROUPING SETS (
+      #       (m.name, g.type, t.status, date_trunc('day', t.created_at)),
+      #       (m.name, t.status, date_trunc('day', t.created_at)),
+      #       (g.type, t.status, date_trunc('day', t.created_at)),
+      #       (t.status, date_trunc('day', t.created_at))
+      #     )
+      #   SQL
+
+      #   results = ActiveRecord::Base.connection.execute(sql)
+
+      #   # Process the raw SQL results into your desired format
+      #   # format_results(results)
+      # end
+
       def load_for_date
-        load_transactions
-        build_stats
+        _load_transactions
+        _build_stats
       end
 
       private
 
-      def load_transactions
+      def _load_transactions
         @transactions =
-          query
+          _query
           .where('hexo_transactions.created_at >= ? AND hexo_transactions.created_at <= ?',
                  date.beginning_of_day, date.end_of_day)
           .where('hexo_orders.test != ?', true) # transaction.order.test == [true]
@@ -30,34 +61,34 @@ module Stats
           .to_a
       end
 
-      def build_stats
+      def _build_stats
         results = []
 
         # Add the "All merchants, All gateways" combinations first
-        results += build_combinations(ALL_MERCHANT, ALL_GATEWAY)
+        results += _build_combinations(ALL_MERCHANT, ALL_GATEWAY)
 
         # Add all merchant-specific combinations with "All gateways"
-        merchants.each do |merchant|
-          results += build_combinations(merchant, ALL_GATEWAY)
+        _merchants.each do |merchant|
+          results += _build_combinations(merchant, ALL_GATEWAY)
         end
 
         # Add all gateway-specific combinations with "All merchants"
-        gateways.each do |gateway|
-          results += build_combinations(ALL_MERCHANT, gateway)
+        _gateways.each do |gateway|
+          results += _build_combinations(ALL_MERCHANT, gateway)
         end
 
         # Add all merchant+gateway specific combinations
-        merchants.each do |merchant|
-          gateways.each do |gateway|
-            results += build_combinations(merchant, gateway)
+        _merchants.each do |merchant|
+          _gateways.each do |gateway|
+            results += _build_combinations(merchant, gateway)
           end
         end
 
         results
       end
 
-      def build_combinations(merchant, gateway)
-        filtered = filter_transactions(merchant, gateway)
+      def _build_combinations(merchant, gateway)
+        filtered = _filter_transactions(merchant, gateway)
         total = filtered.size.to_f
 
         STATUSES.map do |status|
@@ -77,26 +108,26 @@ module Stats
         end.compact
       end
 
-      def filter_transactions(merchant, gateway)
+      def _filter_transactions(merchant, gateway)
         @transactions.select do |t|
           (merchant[:name] == 'All' || t.order.shop.merchant_id == merchant[:id]) &&
             (gateway[:name] == 'All' || t.order.gateway_id == gateway[:id])
         end
       end
 
-      def merchants
+      def _merchants
         @merchants ||= @transactions
                        .map { |t| { name: t.order.shop.merchant.name, id: t.order.shop.merchant_id } }
                        .uniq
       end
 
-      def gateways
+      def _gateways
         @gateways ||= @transactions
                       .map { |t| { name: t.order.gateway.type.demodulize, id: t.order.gateway.id } }
                       .uniq
       end
 
-      def query
+      def _query
         Transaction::Base.eager_load(order: %i[gateway shop])
       end
     end

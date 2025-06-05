@@ -1,0 +1,18 @@
+#!/usr/bin/env ruby
+
+lib_dir = File.expand_path("../lib", __dir__)
+$:.unshift(lib_dir)
+Dir[File.join(lib_dir, '*')].each { |d| $:.unshift(d) if File.directory?(d) }
+
+require 'rubygems'
+require 'bundler'
+require_relative '../lib/stats/env'
+require_relative '../lib/stats/loader'
+Bundler.setup :default
+
+#require 'rack/contrib'
+#require 'smart_routing/environment'
+Stats::Env.development
+
+require 'irb'
+IRB.start

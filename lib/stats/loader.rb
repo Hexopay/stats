@@ -5,6 +5,9 @@ require_relative 'loader/merchant_order_stats'
 
 module Stats
   class Loader
+    BATCH_SIZE = 500
+    LOAD_TIMEOUT = Env.production? ? 10 : 1
+
     attr_reader :report_type, :dates, :klass
 
     def initialize(options)
