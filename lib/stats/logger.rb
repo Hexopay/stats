@@ -3,7 +3,7 @@
 module Stats
   module Logger
     def log(message, level = :info)
-      puts "#{Time.now}: #{Env.current} #{message}\n" unless Env.production?
+      puts "#{Time.now}: #{Env.current} #{message&.truncate(100)}\n"
       Rails.logger.send(level, message)
     end
 
