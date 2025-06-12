@@ -12,6 +12,7 @@ gem 'faraday_middleware'
 gem 'fuubar'
 gem 'hirb'
 gem 'json'
+gem 'pg'
 gem 'pry'
 gem 'pry-byebug'
 gem 'pry-rescue'
@@ -24,4 +25,5 @@ group :test do
   gem 'factory_bot'
   gem 'rspec'
   gem 'webmock'
+  gem 'database_cleaner-active_record', '~> 2.0', '>= 2.0.1'
 end

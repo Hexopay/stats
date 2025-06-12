@@ -1,0 +1,21 @@
+FactoryBot.define do
+  factory :transaction, class: 'Transaction::Base' do
+    order
+    uid { rand(Time.now.to_i) }
+    type { "Transaction::Authorization" }
+    amount { 100 }
+
+    # merchant
+    # shop
+    # status { 'completed' }
+    # country { 'US' }
+    # currency { 'USD' }
+    # gateway_type { 'Gateway::Stripe' }
+    # transaction_type { 'Transaction::Sale' }
+    # transaction_id { rand(Time.now.to_i) }
+    # amount { 1000 }
+    # eur_amount { 850 }
+    # gbp_amount { 750 }
+    created_at { Time.now }
+  end
+end

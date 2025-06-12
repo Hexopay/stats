@@ -8,6 +8,8 @@ module Stats
     include Logger
     attr_reader :data, :report_type, :index_name, :settings, :elastic_url, :proxy_url, :headers
 
+    PUBLISHING_TIMEOUT = Env.production? ? 0.1 : 0
+
     def initialize(report_type, data, settings)
       @data = data
       @report_type = report_type
@@ -25,6 +27,7 @@ module Stats
       data.each do |set_for_date|
         set_for_date[:data].each do |item|
           _push_to_elastic(item)
+          sleep(PUBLISHING_TIMEOUT)
         end
       end
     end

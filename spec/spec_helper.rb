@@ -17,17 +17,35 @@ ENV['ENV'] = 'test'
 require 'rspec'
 require 'webmock/rspec'
 require 'factory_bot'
+require 'database_cleaner/active_record'
 require_relative '../lib/stats'
+require_relative 'helpers/db'
 
 WebMock.enable!
 WebMock.disable_net_connect!(allow_localhost: true)
 
 RSpec.configure do |config|
-  config.before(:each) do
-    stub_request(:get, /api.github.com/).
-      with(headers: {'Accept'=>'*/*', 'User-Agent'=>'Ruby'}).
-      to_return(status: 200, body: "stubbed response", headers: {})
+  config.include FactoryBot::Syntax::Methods
+  config.before(:suite) do
+    FactoryBot.find_definitions
   end
+
+  config.before(:suite) do
+    DatabaseCleaner.strategy = :transaction
+    DatabaseCleaner.clean_with(:truncation)
+  end
+
+  config.around(:each) do |example|
+    DatabaseCleaner.cleaning do
+      example.run
+    end
+  end
+
+  # config.before(:each) do
+  #   stub_request(:get, /api.github.com/).
+  #     with(headers: {'Accept'=>'*/*', 'User-Agent'=>'Ruby'}).
+  #     to_return(status: 200, body: "stubbed response", headers: {})
+  # end
 
   # rspec-expectations config goes here. You can use an alternate
   # assertion/expectation library such as wrong or the stdlib/minitest

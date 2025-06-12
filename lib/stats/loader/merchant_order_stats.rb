@@ -117,7 +117,7 @@ module Stats
 
       def _merchants
         @merchants ||= @transactions
-                       .map { |t| { name: t.order.shop.merchant.name, id: t.order.shop.merchant_id } }
+                       .map { |t| { name: t.order.shop.merchant.company_name, id: t.order.shop.merchant_id } }
                        .uniq
       end
 

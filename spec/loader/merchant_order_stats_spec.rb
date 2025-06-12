@@ -3,55 +3,35 @@
 require 'spec_helper'
 
 RSpec.describe Stats::Loader::MerchantOrderStats do
-  let(:date) { Date.new(2023, 1, 1) }
+  let(:date) { Date.current }
   let(:stats_loader) { described_class.new(date) }
 
   # Mock data
-  let(:merchant1) { double('Merchant', id: 1, name: 'Merchant 1') }
-  let(:merchant2) { double('Merchant', id: 2, name: 'Merchant 2') }
-  let(:gateway1) { double('Gateway', id: 1, type: 'Gateway::Stripe') }
-  let(:gateway2) { double('Gateway', id: 2, type: 'Gateway::Paypal') }
-  let(:shop1) { double('Shop', merchant: merchant1, merchant_id: 1) }
-  let(:shop2) { double('Shop', merchant: merchant2, merchant_id: 2) }
+  let(:merchant1) { create :merchant, company_name: 'c1' }
+  let(:merchant2) { create :merchant, company_name: 'c2' }
+  let(:gateway2) { create :gateway, type: 'Gateway::Paypal' }
+  let(:gateway1) { create :gateway, type: 'Gateway::Stripe' }
+  let(:shop1) { create :shop, merchant: merchant1 }
+  let(:shop2) { create :shop, merchant: merchant2 }
 
-  let(:order1) { double('Order', gateway: gateway1, gateway_id: 1, shop: shop1, test: false) }
-  let(:order2) { double('Order', gateway: gateway2, gateway_id: 2, shop: shop2, test: false) }
-  let(:order_test) { double('Order', gateway: gateway1, gateway_id: 1, shop: shop1, test: true) }
+  let(:order1) { create :order, gateway: gateway1, shop: shop1, test: false }
+  let(:order2) { create :order, gateway: gateway2, shop: shop2, test: false }
+  let(:order_test) { create :order, gateway: gateway1, shop: shop1, test: true }
 
-  let(:transaction1) { double('Transaction', status: 'successful', order: order1) }
-  let(:transaction2) { double('Transaction', status: 'failed', order: order2) }
-  let(:transaction3) { double('Transaction', status: 'pending', order: order1) }
-  let(:transaction_test) { double('Transaction', status: 'successful', order: order_test) }
+  let(:transaction1) { create :transaction, status: 'successful', order: order1 }
+  let(:transaction2) { create :transaction, status: 'failed', order: order1 }
+  let(:transaction3) { create :transaction, status: 'pending', order: order2 }
+  let(:transaction4) { create :transaction, status: 'completed', order: order2 }
+  let(:transaction_test) { create :transaction, status: 'successful', order: order_test }
   let(:arr) { [transaction1, transaction2, transaction3] }
   let(:arr_test) { [transaction_test] }
 
-  class Array
-    def where(*args)
-      self
-    end
-    def includes(*args)
-      self
-    end
-  end
-
-  # Stub для Transaction::Base
-  let(:transaction_stub) do
-    double('Transaction::Base').tap do |t|
-      allow(t).to receive(:merchant).and_return(merchant1.name)
-      # allow(op).to receive(:select).and_return(op)
-      # allow(op).to receive(:where).with(created_at: date).and_return(op)
-      # allow(op).to receive(:group).and_return(op)
-      # allow(op).to receive(:to_a).and_return(op)
-      # allow(op).to receive(:map).and_return(operation_data)
-      # allow(op).to receive(:each_slice).with(500).and_return(operation_data)
-    end
-  end
-
   before do
-    allow(stats_loader).to receive(:_query).and_return(transaction_stub)
-    # allow(stats_loader).to receive(:_load_transactions).and_call_original
-    # allow(arr).to receive(:where).and_return(arr)
-    # allow(arr).to receive(:includes).and_return(arr)
+    transaction1
+    transaction2
+    transaction3
+    transaction4
+    transaction_test
   end
 
   describe '#initialize' do
@@ -70,23 +50,26 @@ RSpec.describe Stats::Loader::MerchantOrderStats do
 
         # Check All merchants + All gateways
         all_all = result.find { |r| r[:merchant] == 'All' && r[:gateway] == '' }
-        expect(all_all[:count]).to eq(3)
+        expect(all_all[:count]).to eq(4)
 
         # Check merchant-specific
-        merchant1_all = result.find { |r| r[:merchant] == 'Merchant 1' && r[:gateway] == '' }
+        merchant1_all = result.find { |r| r[:merchant] == 'c1' && r[:gateway] == '' }
         expect(merchant1_all[:count]).to eq(2)
 
         # Check gateway-specific
         all_gateway2 = result.find { |r| r[:merchant] == 'All' && r[:gateway] == 'Paypal' }
-        expect(all_gateway2[:count]).to eq(1)
+        expect(all_gateway2[:count]).to eq(2)
 
         # Check merchant+gateway specific
-        merchant1_gateway1 = result.find { |r| r[:merchant] == 'Merchant 1' && r[:gateway] == 'Stripe' }
+        merchant1_gateway1 = result.find { |r| r[:merchant] == 'c1' && r[:gateway] == 'Stripe' }
+        expect(merchant1_gateway1[:count]).to eq(2)
+
+        merchant2_gateway2 = result.find { |r| r[:merchant] == 'c2' && r[:gateway] == 'Paypal' }
         expect(merchant1_gateway1[:count]).to eq(2)
       end
 
       it 'excludes test transactions' do
-        allow(stats_loader).to receive(:_query).and_return(arr_test)
+        allow(stats_loader).to receive(:_load_transactions).and_return(arr_test)
         result = stats_loader.load_for_date
         expect(result.any? { |r| r[:count] == 2 }).to be false
       end
@@ -94,7 +77,7 @@ RSpec.describe Stats::Loader::MerchantOrderStats do
 
     context 'with no transactions' do
       before do
-        allow(stats_loader).to receive(:_query).and_return([])
+        allow(stats_loader).to receive(:_load_transactions).and_return([])
       end
 
       it 'returns empty array' do

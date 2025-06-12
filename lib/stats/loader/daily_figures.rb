@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-
+require 'ostruct'
 module Stats
   class Loader
     class DailyFigures
@@ -10,12 +10,12 @@ module Stats
       end
 
       def grouped_operations
-        Operation
+        ops = Operation
           .joins(:merchant, :shop)
           .where(created_at: date)
           .group(
             'hexo_operations.merchant_id',
-            'merchants.name',
+            'merchants.company_name',
             'hexo_operations.shop_id',
             'shops.name',
             'hexo_operations.status',
@@ -26,7 +26,7 @@ module Stats
           )
           .pluck(
             'hexo_operations.merchant_id',
-            'merchants.name',
+            'merchants.company_name',
             'hexo_operations.shop_id',
             'shops.name',
             'hexo_operations.status',
@@ -39,30 +39,29 @@ module Stats
             Arel.sql('SUM(hexo_operations.gbp_amount) / 100.0'),
             Arel.sql('SUM(hexo_operations.amount) / 100.0')
           )
-          .map do |row|
-            OpenStruct.new(
-              merchant_id: row[0],
-              merchant_name: row[1],
-              shop_id: row[2],
-              shop_name: row[3],
-              status: row[4],
-              country: row[5],
-              currency: row[6],
-              gateway_type: row[7],
-              transaction_type: row[8],
-              count: row[9],
-              total_eur_amount: row[10],
-              total_gbp_amount: row[11],
-              total_amount: row[12]
-            )
-          end
+        ops.map do |row|
+          OpenStruct.new(
+            merchant_id: row[0],
+            merchant_name: row[1],
+            shop_id: row[2],
+            shop_name: row[3],
+            status: row[4],
+            country: row[5],
+            currency: row[6],
+            gateway_type: row[7],
+            transaction_type: row[8],
+            count: row[9],
+            total_eur_amount: row[10],
+            total_gbp_amount: row[11],
+            total_amount: row[12]
+          )
+        end
       end
 
       def load_for_date
         res = []
-
-        grouped_operations.to_a.each_slice(BATCH_SIZE) do |batch|
-          res << batch.map do |op|
+        grouped_operations.to_a.each_slice(BATCH_SIZE) do |slice|
+          res << slice.map do |op|
             {
               merchant: op.merchant_name,
               back_office_merchant_id: op.merchant_id,
