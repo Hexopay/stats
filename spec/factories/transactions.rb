@@ -1,8 +1,8 @@
 FactoryBot.define do
-  factory :transaction, class: 'Transaction::Base' do
+  factory :transaction, class: 'Transaction::Authorization' do
     order
     uid { rand(Time.now.to_i) }
-    type { "Transaction::Authorization" }
+    # type { "Transaction::Authorization" }
     amount { 100 }
 
     # merchant
@@ -16,6 +16,7 @@ FactoryBot.define do
     # amount { 1000 }
     # eur_amount { 850 }
     # gbp_amount { 750 }
-    created_at { Time.now }
+    created_at { Time.now.utc }
+    paid_at { Time.now.utc }
   end
 end

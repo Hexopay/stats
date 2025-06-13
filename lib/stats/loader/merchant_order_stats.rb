@@ -3,7 +3,7 @@
 module Stats
   class Loader
     class MerchantOrderStats
-      attr_reader :date
+      attr_reader :date, :transactions, :merchants, :gateways
 
       STATUSES = %i[All successful failed pending incomplete].freeze
       ALL_MERCHANT = { name: 'All', id: nil }.freeze
@@ -45,17 +45,16 @@ module Stats
       # end
 
       def load_for_date
-        _load_transactions
+        @transactions = _load_transactions
         _build_stats
       end
 
       private
 
       def _load_transactions
-        @transactions =
-          _query
-          .where('hexo_transactions.created_at >= ? AND hexo_transactions.created_at <= ?',
-                 date.beginning_of_day, date.end_of_day)
+        _query
+          .where('hexo_transactions.paid_at >= ? AND hexo_transactions.paid_at <= ?',
+                  date.beginning_of_day, date.end_of_day)
           .where('hexo_orders.test != ?', true) # transaction.order.test == [true]
           .includes(order: [:gateway, { shop: :merchant }])
           .to_a
@@ -67,10 +66,11 @@ module Stats
         # Add the "All merchants, All gateways" combinations first
         results += _build_combinations(ALL_MERCHANT, ALL_GATEWAY)
 
+        # comment follow 4 lines to not include combinations of [merchant] + All gateways
         # Add all merchant-specific combinations with "All gateways"
-        _merchants.each do |merchant|
-          results += _build_combinations(merchant, ALL_GATEWAY)
-        end
+        # _merchants.each do |merchant|
+        #   results += _build_combinations(merchant, ALL_GATEWAY)
+        # end
 
         # Add all gateway-specific combinations with "All merchants"
         _gateways.each do |gateway|
@@ -109,20 +109,20 @@ module Stats
       end
 
       def _filter_transactions(merchant, gateway)
-        @transactions.select do |t|
+        transactions.select do |t|
           (merchant[:name] == 'All' || t.order.shop.merchant_id == merchant[:id]) &&
             (gateway[:name] == 'All' || t.order.gateway_id == gateway[:id])
         end
       end
 
       def _merchants
-        @merchants ||= @transactions
+        @merchants ||= transactions
                        .map { |t| { name: t.order.shop.merchant.company_name, id: t.order.shop.merchant_id } }
                        .uniq
       end
 
       def _gateways
-        @gateways ||= @transactions
+        @gateways ||= transactions
                       .map { |t| { name: t.order.gateway.type.demodulize, id: t.order.gateway.id } }
                       .uniq
       end
