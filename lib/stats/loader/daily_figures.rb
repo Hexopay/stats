@@ -12,7 +12,7 @@ module Stats
       def grouped_operations
         ops = Operation
           .joins(:merchant, :shop)
-          .where(created_at: date)
+          .where(generated_at: date.beginning_of_day.utc..date.end_of_day.utc)
           .group(
             'hexo_operations.merchant_id',
             'merchants.company_name',

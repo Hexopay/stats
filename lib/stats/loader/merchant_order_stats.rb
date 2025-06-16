@@ -53,8 +53,7 @@ module Stats
 
       def _load_transactions
         _query
-          .where('hexo_transactions.paid_at >= ? AND hexo_transactions.paid_at <= ?',
-                  date.beginning_of_day, date.end_of_day)
+          .where(created_at: date.beginning_of_day.utc..date.end_of_day.utc)
           .where('hexo_orders.test != ?', true) # transaction.order.test == [true]
           .includes(order: [:gateway, { shop: :merchant }])
           .to_a

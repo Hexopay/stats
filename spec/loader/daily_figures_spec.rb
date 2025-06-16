@@ -12,30 +12,8 @@ RSpec.describe Stats::Loader::DailyFigures do
   let(:date_in_past) { Date.current - 10.days }
   let(:daily_figures_in_past) { described_class.new(date_in_past) }
 
-
-  # Stub для Operation
-  # let(:operation) { Operation.new }
-
-    # double('Operation').tap do |op|
-    #   allow(op).to receive(:joins).with(:merchant, :shop).and_return(op)
-    #   allow(op).to receive(:select).and_return(op)
-    #   allow(op).to receive(:where).with(created_at: date).and_return(op)
-    #   allow(op).to receive(:group).and_return(op)
-    #   allow(op).to receive(:to_a).and_return(op)
-    #   allow(op).to receive(:map).and_return(operation_data)
-    #   allow(op).to receive(:each_slice).with(500).and_return(operation_data)
-    # end
-  # end
-
-  # before do
-  #   stub_const('Operation', operation_stub)
-  # end
-
   describe '#load_for_date' do
     context 'when operations exist' do
-      # it 'returns an Array' do
-      # end
-
       it 'returns operation data with correct structure' do
         result = daily_figures.load_for_date
         expect(result).to be_an(Array)

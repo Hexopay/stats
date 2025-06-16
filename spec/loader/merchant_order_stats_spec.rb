@@ -49,7 +49,7 @@ RSpec.describe Stats::Loader::MerchantOrderStats do
 
         expect(result).to be_an(Array)
         # Expected combinations:
-        # 2 merchants with All gateways (5 statuses each) = 10
+        # merchants with All gateways not included in tesult
         # 2 gateways with All merchants (5 statuses each) = 10
         # 4 merchant+gateway combinations (5 statuses each) = 20
         # Total = 40 minus any with zero counts

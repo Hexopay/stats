@@ -12,5 +12,6 @@ FactoryBot.define do
     eur_amount { 850 }
     gbp_amount { 750 }
     created_at { Date.current }
+    generated_at { Time.current.utc }
   end
 end
