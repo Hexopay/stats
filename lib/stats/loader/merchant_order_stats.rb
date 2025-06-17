@@ -7,7 +7,7 @@ module Stats
 
       STATUSES = %i[All successful failed pending incomplete].freeze
       ALL_MERCHANT = { name: 'All', id: nil }.freeze
-      ALL_GATEWAY = { name: 'All', id: nil }.freeze
+      ALL_GATEWAY = { type: 'All', id: nil }.freeze
 
       def initialize(date)
         @date = date
@@ -51,9 +51,31 @@ module Stats
 
       private
 
+      def _load_transactions_0
+        opts = {
+          from: '2025-05-19',
+          to: '2025-05-19',
+          group_period: nil,
+          time_zone: 'Etc/UTC',
+          merchant: '0',
+          shop: '0',
+          gateway_type: '0',
+          card_type: nil,
+          country: '0',
+          currency: '0',
+          transaction_type: '0',
+          status: '0',
+          date_range: 'paid_at'
+        }
+
+        r = Builders::TransactionReport.new(opts).build
+        r.generate
+        r.rows
+      end
+
       def _load_transactions
         _query
-          .where(created_at: date.beginning_of_day.utc..date.end_of_day.utc)
+          .where(paid_at: date.beginning_of_day.utc..date.end_of_day.utc)
           .where('hexo_orders.test != ?', true) # transaction.order.test == [true]
           .includes(order: [:gateway, { shop: :merchant }])
           .to_a
@@ -72,9 +94,9 @@ module Stats
         # end
 
         # Add all gateway-specific combinations with "All merchants"
-        _gateways.each do |gateway|
-          results += _build_combinations(ALL_MERCHANT, gateway)
-        end
+        # _gateways.each do |gateway|
+        #   results += _build_combinations(ALL_MERCHANT, gateway)
+        # end
 
         # Add all merchant+gateway specific combinations
         _merchants.each do |merchant|
@@ -90,13 +112,16 @@ module Stats
         filtered = _filter_transactions(merchant, gateway)
         total = filtered.size.to_f
 
+        return [] if filtered.empty?
+
         STATUSES.map do |status|
           count = status == :All ? total : filtered.count { |t| t.status == status.to_s }
-          next if count.zero?
+
+          # next if count.zero?
 
           {
             merchant: merchant[:name],
-            gateway: gateway[:name] == 'All' ? '' : gateway[:name],
+            gateway: gateway[:type] == 'All' ? '' : gateway[:type],
             export_time: Time.now,
             created_at: date,
             time_series: Time.now,
@@ -110,7 +135,7 @@ module Stats
       def _filter_transactions(merchant, gateway)
         transactions.select do |t|
           (merchant[:name] == 'All' || t.order.shop.merchant_id == merchant[:id]) &&
-            (gateway[:name] == 'All' || t.order.gateway_id == gateway[:id])
+            (gateway[:type] == 'All' || t.order.gateway.type.demodulize == gateway[:type])
         end
       end
 
@@ -122,7 +147,7 @@ module Stats
 
       def _gateways
         @gateways ||= transactions
-                      .map { |t| { name: t.order.gateway.type.demodulize, id: t.order.gateway.id } }
+                      .map { |t| { type: t.order.gateway.type.demodulize, id: t.order.gateway.id } }
                       .uniq
       end
 

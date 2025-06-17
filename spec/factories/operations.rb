@@ -13,5 +13,6 @@ FactoryBot.define do
     gbp_amount { 750 }
     created_at { Date.current }
     generated_at { Time.current.utc }
+    paid_at { Time.current.utc }
   end
 end

@@ -12,7 +12,7 @@ module Stats
       def grouped_operations
         ops = Operation
           .joins(:merchant, :shop)
-          .where(generated_at: date.beginning_of_day.utc..date.end_of_day.utc)
+          .where(paid_at: date.beginning_of_day.utc..date.end_of_day.utc)
           .group(
             'hexo_operations.merchant_id',
             'merchants.company_name',
@@ -64,9 +64,9 @@ module Stats
           res << slice.map do |op|
             {
               merchant: op.merchant_name,
-              back_office_merchant_id: op.merchant_id,
+              back_office_merchant_id: op.merchant_id.to_s,
               shop: op.shop_name,
-              back_office_shop_id: op.shop_id,
+              back_office_shop_id: op.shop_id.to_s,
               gateway: op.gateway_type.demodulize,
               status: op.status.capitalize,
               country: op.country,

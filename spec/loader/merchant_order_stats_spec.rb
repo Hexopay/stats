@@ -63,9 +63,9 @@ RSpec.describe Stats::Loader::MerchantOrderStats do
         merchant1_all = result.find { |r| r[:merchant] == 'c1' && r[:gateway] == '' }
         expect(merchant1_all).to be_nil
 
-        # Check gateway-specific
+        # Check gateway-specific not included
         all_gateway2 = result.find { |r| r[:merchant] == 'All' && r[:gateway] == 'Paypal' }
-        expect(all_gateway2[:count]).to eq(2)
+        expect(all_gateway2).to be_nil
 
         # Check merchant+gateway specific
         merchant1_gateway1 = result.find { |r| r[:merchant] == 'c1' && r[:gateway] == 'Stripe' }
@@ -110,8 +110,8 @@ RSpec.describe Stats::Loader::MerchantOrderStats do
     describe '#_gateways' do
       it 'returns unique gateways' do
         expect(stats_loader.gateways).to contain_exactly(
-          { name: 'Stripe', id: 1 },
-          { name: 'Paypal', id: 2 }
+          { type: 'Stripe', id: 1 },
+          { type: 'Paypal', id: 2 }
         )
       end
     end
@@ -126,14 +126,14 @@ RSpec.describe Stats::Loader::MerchantOrderStats do
 
       it 'filters by gateway' do
         merchant = described_class::ALL_MERCHANT
-        gateway = { name: 'Paypal', id: 2 }
+        gateway = { type: 'Paypal', id: 2 }
         filtered = stats_loader.send(:_filter_transactions, merchant, gateway)
         expect(filtered).to contain_exactly(transaction3, transaction4)
       end
 
       it 'filters by both merchant and gateway' do
         merchant = { name: 'c1', id: 1 }
-        gateway = { name: 'Stripe', id: 1 }
+        gateway = { type: 'Stripe', id: 1 }
         filtered = stats_loader.send(:_filter_transactions, merchant, gateway)
         expect(filtered).to contain_exactly(transaction1, transaction2)
       end
@@ -142,10 +142,10 @@ RSpec.describe Stats::Loader::MerchantOrderStats do
     describe '#_build_combinations' do
       it 'builds stats for all statuses' do
         merchant = described_class::ALL_MERCHANT
-        gateway = { name: 'Paypal', id: 2 }
+        gateway = { type: 'Paypal', id: 2 }
         combinations = stats_loader.send(:_build_combinations, merchant, gateway)
 
-        expect(combinations.size).to eq(2) # pending, completed, All (assuming successful/failed are 0)
+        expect(combinations.size).to eq(5) # pending, completed, All (assuming successful/failed are 0)
         expect(combinations.map { |c| c[:status] }).to include('pending', 'All')
       end
 

@@ -21,9 +21,9 @@ RSpec.describe Stats::Loader::DailyFigures do
         expect(result).to eq(
           [{
             merchant: merchant.company_name,
-            back_office_merchant_id: merchant.id,
+            back_office_merchant_id: merchant.id.to_s,
             shop: shop.name,
-            back_office_shop_id: shop.id,
+            back_office_shop_id: shop.id.to_s,
             gateway: 'Stripe',
             status: 'Completed',
             country: 'US',
