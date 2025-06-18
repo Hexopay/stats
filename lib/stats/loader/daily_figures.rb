@@ -1,18 +1,21 @@
 # frozen_string_literal: true
+# rubocop:disable Layout/HashAlignment
 require 'ostruct'
+
 module Stats
   class Loader
     class DailyFigures
-      attr_reader :date
+      attr_reader :date, :transactions
 
       def initialize(date)
         @date = date
+        @transactions = nil
       end
 
       def grouped_operations
         ops = Operation
           .joins(:merchant, :shop)
-          .where(paid_at: date.beginning_of_day.utc..date.end_of_day.utc)
+          .where(created_at: date.beginning_of_day.utc..date.end_of_day.utc)
           .group(
             'hexo_operations.merchant_id',
             'merchants.company_name',
@@ -58,7 +61,7 @@ module Stats
         end
       end
 
-      def load_for_date
+      def load_for_date_0
         res = []
         grouped_operations.to_a.each_slice(BATCH_SIZE) do |slice|
           res << slice.map do |op|
@@ -79,6 +82,63 @@ module Stats
               volume_eur: op.total_eur_amount.to_f,
               volume_gbp: op.total_gbp_amount.to_f,
               count: op.count
+            }
+          end
+          sleep(LOAD_TIMEOUT)
+        end
+        res.flatten
+      end
+
+      def load_for_date
+        @transactions = _load_transactions
+        _build_stats
+      end
+
+      private
+
+      def _load_transactions
+        opts = {
+          from:             date.strftime('%Y-%m-%d'),
+          to:               date.strftime('%Y-%m-%d'),
+          group_period:     nil,
+          card_type:        nil,
+          date_range:       'paid_at',
+          time_zone:        'Etc/UTC',
+          merchant:         '0',
+          shop:             '0',
+          gateway_type:     '0',
+          country:          '0',
+          currency:         '0',
+          transaction_type: '0',
+          status:           '0'
+        }
+
+        r = Builders::TransactionReport.new(opts).build
+        r.generate
+        r.rows
+      end
+
+      def _build_stats
+        res = []
+        transactions.to_a.each_slice(BATCH_SIZE) do |slice|
+          res << slice.map do |item|
+            {
+              merchant:               item['company_name'],
+              back_office_merchant_id: item['merchant_id'].to_s,
+              shop:                   item['shop_name'],
+              back_office_shop_id:     item['shop_id'].to_s,
+              gateway:                item['gateway_type'].demodulize,
+              status:                 item['status'].capitalize,
+              country:                item['country'],
+              currency:               item['currency'],
+              transaction_type:       item['transaction_type'].demodulize,
+              volume:                 item['volume'].to_f / 100,
+              volume_eur:             item['volume_eur'].to_f / 100,
+              volume_gbp:             item['volume_gbp'].to_f / 100,
+              count:                  item['count'],
+              export_time:            Time.now,
+              created_at:             date.strftime('%Y-%m-%d'),
+              card:                   ''
             }
           end
           sleep(LOAD_TIMEOUT)

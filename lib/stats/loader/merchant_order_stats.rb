@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+# rubocop:disable Layout/HashAlignment
 
 module Stats
   class Loader
@@ -7,7 +8,7 @@ module Stats
 
       STATUSES = %i[All successful failed pending incomplete].freeze
       ALL_MERCHANT = { name: 'All', id: nil }.freeze
-      ALL_GATEWAY = { type: 'All', id: nil }.freeze
+      ALL_GATEWAY = { type: 'All' }.freeze
 
       def initialize(date)
         @date = date
@@ -51,21 +52,21 @@ module Stats
 
       private
 
-      def _load_transactions_0
+      def _load_transactions
         opts = {
-          from: '2025-05-19',
-          to: '2025-05-19',
-          group_period: nil,
-          time_zone: 'Etc/UTC',
-          merchant: '0',
-          shop: '0',
-          gateway_type: '0',
-          card_type: nil,
-          country: '0',
-          currency: '0',
+          from:             date.strftime('%Y-%m-%d'),
+          to:               date.strftime('%Y-%m-%d'),
+          group_period:     nil,
+          card_type:        nil,
+          date_range:       'paid_at',
+          time_zone:        'Etc/UTC',
+          merchant:         '0',
+          shop:             '0',
+          gateway_type:     '0',
+          country:          '0',
+          currency:         '0',
           transaction_type: '0',
-          status: '0',
-          date_range: 'paid_at'
+          status:           '0'
         }
 
         r = Builders::TransactionReport.new(opts).build
@@ -73,7 +74,7 @@ module Stats
         r.rows
       end
 
-      def _load_transactions
+      def _load_transactions_0
         _query
           .where(paid_at: date.beginning_of_day.utc..date.end_of_day.utc)
           .where('hexo_orders.test != ?', true) # transaction.order.test == [true]
@@ -110,12 +111,12 @@ module Stats
 
       def _build_combinations(merchant, gateway)
         filtered = _filter_transactions(merchant, gateway)
-        total = filtered.size.to_f
+        total = filtered.sum{|i| i['count']}.to_f
 
         return [] if filtered.empty?
 
         STATUSES.map do |status|
-          count = status == :All ? total : filtered.count { |t| t.status == status.to_s }
+          count = status == :All ? total : filtered.select { |t| t['status'] == status.to_s }.sum{|i| i['count']}.to_f
 
           # next if count.zero?
 
@@ -134,20 +135,20 @@ module Stats
 
       def _filter_transactions(merchant, gateway)
         transactions.select do |t|
-          (merchant[:name] == 'All' || t.order.shop.merchant_id == merchant[:id]) &&
-            (gateway[:type] == 'All' || t.order.gateway.type.demodulize == gateway[:type])
+          (merchant[:name] == 'All' || t['merchant_id'] == merchant[:id]) &&
+            (gateway[:type] == 'All' || t['gateway_type'].demodulize == gateway[:type])
         end
       end
 
       def _merchants
         @merchants ||= transactions
-                       .map { |t| { name: t.order.shop.merchant.company_name, id: t.order.shop.merchant_id } }
+                       .map { |t| { name: t['company_name'], id: t['merchant_id'] } }
                        .uniq
       end
 
       def _gateways
         @gateways ||= transactions
-                      .map { |t| { type: t.order.gateway.type.demodulize, id: t.order.gateway.id } }
+                      .map { |t| { type: t['gateway_type'].demodulize } }
                       .uniq
       end
 

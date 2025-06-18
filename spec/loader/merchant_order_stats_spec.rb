@@ -27,6 +27,49 @@ RSpec.describe Stats::Loader::MerchantOrderStats do
   let(:transaction_test) { create :transaction, status: 'successful', order: order_test }
   let(:arr) { [transaction1, transaction2, transaction3, transaction4] }
   let(:arr_test) { [transaction_test] }
+  let(:tr_data) {
+    [
+      {
+        "merchant_id" => merchant1.id,
+        "shop_id" => shop1.id,
+        "gateway_type" => gateway1.type,
+        "country" => nil,
+        "currency" => "USD",
+        "transaction_type" => "Transaction::Payment",
+        "status" => "successful",
+        "count" => 2,
+        "volume" => 10,
+        "company_name" => merchant1.company_name,
+        "shop_name" => shop1.name
+      },
+      {
+        "merchant_id" => merchant1.id,
+        "shop_id" => shop1.id,
+        "gateway_type" => gateway2.type,
+        "country" => nil,
+        "currency" => "USD",
+        "transaction_type" => "Transaction::Payment",
+        "status" => "successful",
+        "count" => 2,
+        "volume" => 10,
+        "company_name" => merchant1.company_name,
+        "shop_name" => shop1.name
+      },
+      {
+        "merchant_id" => merchant2.id,
+        "shop_id" => shop1.id,
+        "gateway_type" => gateway2.type,
+        "country" => nil,
+        "currency" => "USD",
+        "transaction_type" => "Transaction::Payment",
+        "status" => "successful",
+        "count" => 2,
+        "volume" => 10,
+        "company_name" => merchant2.company_name,
+        "shop_name" => shop2.name
+      }
+    ]
+  }
 
   before do
     transaction1
@@ -44,6 +87,10 @@ RSpec.describe Stats::Loader::MerchantOrderStats do
 
   describe '#load_for_date' do
     context 'with transactions' do
+      before do
+        allow(stats_loader).to receive(:_load_transactions).and_return(tr_data)
+      end
+
       it 'returns stats for all combinations except All merchants + All gateways' do
         result = stats_loader.load_for_date
 
@@ -95,6 +142,7 @@ RSpec.describe Stats::Loader::MerchantOrderStats do
 
   describe 'private methods' do
     before do
+      allow(stats_loader).to receive(:_load_transactions).and_return(tr_data)
       stats_loader.load_for_date
     end
 
@@ -110,8 +158,8 @@ RSpec.describe Stats::Loader::MerchantOrderStats do
     describe '#_gateways' do
       it 'returns unique gateways' do
         expect(stats_loader.gateways).to contain_exactly(
-          { type: 'Stripe', id: 1 },
-          { type: 'Paypal', id: 2 }
+          { type: 'Stripe' },
+          { type: 'Paypal' }
         )
       end
     end
@@ -121,28 +169,31 @@ RSpec.describe Stats::Loader::MerchantOrderStats do
         merchant = { name: 'c1', id: 1 }
         gateway = described_class::ALL_GATEWAY
         filtered = stats_loader.send(:_filter_transactions, merchant, gateway)
-        expect(filtered).to contain_exactly(transaction1, transaction2)
+        # expect(filtered).to contain_exactly(transaction1, transaction2)
+        expect(filtered).to contain_exactly(tr_data[0], tr_data[1])
       end
 
       it 'filters by gateway' do
         merchant = described_class::ALL_MERCHANT
-        gateway = { type: 'Paypal', id: 2 }
+        gateway = { type: 'Paypal'}
         filtered = stats_loader.send(:_filter_transactions, merchant, gateway)
-        expect(filtered).to contain_exactly(transaction3, transaction4)
+        # expect(filtered).to contain_exactly(transaction3, transaction4)
+        expect(filtered).to contain_exactly(tr_data[1], tr_data[2])
       end
 
       it 'filters by both merchant and gateway' do
         merchant = { name: 'c1', id: 1 }
-        gateway = { type: 'Stripe', id: 1 }
+        gateway = { type: 'Paypal' }
         filtered = stats_loader.send(:_filter_transactions, merchant, gateway)
-        expect(filtered).to contain_exactly(transaction1, transaction2)
+        # expect(filtered).to contain_exactly(transaction1, transaction2)
+        expect(filtered).to contain_exactly(tr_data[1])
       end
     end
 
     describe '#_build_combinations' do
       it 'builds stats for all statuses' do
         merchant = described_class::ALL_MERCHANT
-        gateway = { type: 'Paypal', id: 2 }
+        gateway = { type: 'Paypal' }
         combinations = stats_loader.send(:_build_combinations, merchant, gateway)
 
         expect(combinations.size).to eq(5) # pending, completed, All (assuming successful/failed are 0)
@@ -155,7 +206,7 @@ RSpec.describe Stats::Loader::MerchantOrderStats do
         combinations = stats_loader.send(:_build_combinations, merchant, gateway)
 
         success = combinations.find { |c| c[:status] == 'success' }
-        expect(success[:percentage]).to eq(50.0) # 1 of 2
+        expect(success[:percentage]).to eq(100.0) # 1 of 2
       end
     end
   end

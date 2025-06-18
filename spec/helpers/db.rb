@@ -49,6 +49,22 @@ end
 class Paypal < Gateway; end
 class Stripe < Gateway; end
 
+module Builders
+  class TransactionReport
+    def initialize(opts={})
+    end
+    def build
+      return self
+    end
+    def generate
+      return self
+    end
+    def rows
+      []
+    end
+  end
+end
+
 ActiveRecord::Base.establish_connection(
   advisory_locks: false,
   adapter: 'postgresql',
