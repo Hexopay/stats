@@ -8,7 +8,24 @@ module Stats
     include Logger
     attr_reader :data, :report_type, :index_name, :settings, :elastic_url, :proxy_url, :headers
 
-    PUBLISHING_TIMEOUT = Env.production? ? 0.1 : 0
+    FIELDS_FOR_UNIQ_ID_BITS = {
+      daily_figures: %i[
+        back_office_merchant_id
+        back_office_shop_id
+        gateway
+        status
+        country
+        currency
+        transaction_type
+        time_series
+      ],
+      merchant_order_stats: %i[
+        merchant
+        gateway
+        status
+        time_series
+      ]
+    }
 
     def initialize(report_type, data, settings)
       @data = data
@@ -27,9 +44,13 @@ module Stats
       data.each do |set_for_date|
         set_for_date[:data].each do |item|
           _push_to_elastic(item)
-          sleep(PUBLISHING_TIMEOUT)
+          sleep(publishing_timeout)
         end
       end
+    end
+
+    def publishing_timeout
+      Env.production? ? 0.1 : 0
     end
 
     private
@@ -46,11 +67,20 @@ module Stats
       [Env.current, report_type].join('_')
     end
 
+    def _unique_id_bits(item)
+      FIELDS_FOR_UNIQ_ID_BITS[report_type.to_sym].map do |field_name|
+        item[field_name]
+      end.join('-')
+    end
+
+    def _unique_id(item)
+      "#{item[:created_at]}-#{Digest::MD5.hexdigest _unique_id_bits(item)}"
+    end
+
     def _push_to_elastic(item)
-      unique_id_bits = "#{item[:merchant]}-#{item[:gateway]}-#{item[:status]}-#{item[:times_series]}"
-      unique_id = "#{item[:created_at]}-#{Digest::MD5.hexdigest unique_id_bits}"
-      log("Publishing [id:#{unique_id}] #{item}")
-      post("#{elastic_url}/#{index_name}/_doc/#{unique_id}", item.to_json, headers, proxy_url)
+      doc_id = _unique_id(item)
+      log("Publishing [id:#{doc_id}] #{item}")
+      post("#{elastic_url}/#{index_name}/_doc/#{doc_id}", item.to_json, headers, proxy_url)
     end
   end
 end

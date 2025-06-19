@@ -137,6 +137,7 @@ module Stats
               volume_gbp:             item['volume_gbp'].to_f / 100,
               count:                  item['count'],
               export_time:            Time.now,
+              time_series:            Time.now,
               created_at:             date.strftime('%Y-%m-%d'),
               card:                   ''
             }

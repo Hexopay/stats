@@ -93,6 +93,7 @@ RSpec.describe Stats::Loader::DailyFigures do
 
             created_at: Date.current.strftime('%Y-%m-%d'),
             export_time: result.first[:export_time],
+            time_series: result.first[:time_series],
             card: '',
             volume: 20.0,
             volume_eur: 17.0,
