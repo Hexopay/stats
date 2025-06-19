@@ -6,7 +6,7 @@ module Stats
     class MerchantOrderStats
       attr_reader :date, :transactions, :merchants, :gateways
 
-      STATUSES = %i[All successful failed pending incomplete].freeze
+      STATUSES = %i[All successful failed pending incomplete expired].freeze
       ALL_MERCHANT = { name: 'All', id: nil }.freeze
       ALL_GATEWAY = { type: 'All' }.freeze
 
