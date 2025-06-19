@@ -25,7 +25,7 @@ module Stats
         status
         time_series
       ]
-    }
+    }.freeze
 
     def initialize(report_type, data, settings)
       @data = data

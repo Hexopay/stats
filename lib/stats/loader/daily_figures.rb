@@ -66,22 +66,23 @@ module Stats
         grouped_operations.to_a.each_slice(BATCH_SIZE) do |slice|
           res << slice.map do |op|
             {
-              merchant: op.merchant_name,
               back_office_merchant_id: op.merchant_id.to_s,
-              shop: op.shop_name,
+              merchant: op.merchant_name,
               back_office_shop_id: op.shop_id.to_s,
-              gateway: op.gateway_type.demodulize,
+              shop: op.shop_name,
               status: op.status.capitalize,
               country: op.country,
               currency: op.currency,
+              gateway: op.gateway_type.demodulize,
               transaction_type: op.transaction_type.demodulize,
-              export_time: Time.now,
-              created_at: date.strftime('%Y-%m-%d'),
-              card: '',
-              volume: op.total_amount.to_f,
+              count: op.count,
               volume_eur: op.total_eur_amount.to_f,
               volume_gbp: op.total_gbp_amount.to_f,
-              count: op.count
+              volume: op.total_amount.to_f,
+              export_time: Time.now,
+              time_series: Time.now,
+              created_at: date.strftime('%Y-%m-%d'),
+              card: ''
             }
           end
           sleep(LOAD_TIMEOUT)

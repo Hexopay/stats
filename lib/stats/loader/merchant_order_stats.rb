@@ -58,7 +58,7 @@ module Stats
           to:               date.strftime('%Y-%m-%d'),
           group_period:     nil,
           card_type:        nil,
-          date_range:       'paid_at',
+          date_range:       'created_at',
           time_zone:        'Etc/UTC',
           merchant:         '0',
           shop:             '0',
@@ -116,13 +116,13 @@ module Stats
         return [] if filtered.empty?
 
         STATUSES.map do |status|
-          count = status == :All ? total : filtered.select { |t| t['status'] == status.to_s }.sum{|i| i['count']}.to_f
+          count = status.to_s == 'All' ? total : filtered.select { |t| t['status'] == status.to_s }.sum{|i| i['count']}.to_f
 
           # next if count.zero?
 
           {
             merchant: merchant[:name],
-            gateway: gateway[:type] == 'All' ? '' : gateway[:type],
+            gateway: gateway[:type].to_s == 'All' ? '' : gateway[:type].to_s,
             export_time: Time.now,
             created_at: date,
             time_series: Time.now,
