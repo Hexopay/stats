@@ -124,7 +124,7 @@ RSpec.describe Stats::Publisher do
       before { allow(Stats::Env).to receive(:production?).and_return(true) }
 
       it 'returns non-prefixed index name' do
-        expect(subject.send(:_index_name)).to eq('staging_daily_figures')
+        expect(subject.send(:_index_name)).to eq('hexostats_daily_figures')
       end
     end
   end
