@@ -58,11 +58,11 @@ module Stats
     # env                               index_name
     # production  ->             daily_figures|            merchant_order_stats
     # development -> development_daily_figures|development_merchant_order_stats
-    # staging     ->     staging_daily_figures|    staging_merchant_order_stats
+    # staging     ->     hexostats_daily_figures|    hexostats_merchant_order_stats
     # test        ->        test_daily_figures|       test_merchant_order_stats
     def _index_name
       ## TODO Change back after testing on prod
-      return 'staging_' + report_type if Env.production?
+      return 'hexostats_' + report_type if Env.production?
 
       [Env.current, report_type].join('_')
     end
